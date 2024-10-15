@@ -1,5 +1,5 @@
 import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
-import { IntegrationOptions, LambdaIntegration, MethodOptions, Model, RestApi } from 'aws-cdk-lib/aws-apigateway';
+import { LambdaIntegration, MethodOptions, Model, RestApi } from 'aws-cdk-lib/aws-apigateway';
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import path from "path";
@@ -22,33 +22,10 @@ export class ProductServiceStack extends cdk.Stack {
 
         const api = new RestApi(this, 'ProductServiceApi', {
             restApiName: 'Product Service API',
-            description: 'This service serves products.'
+            description: 'This service serves products.',
         });
 
-        const integrationOptions: IntegrationOptions = {
-            requestTemplates: {
-                'application/json': JSON.stringify({
-                    productId: "$input.params('productId')"
-                })
-            },
-            integrationResponses: [
-                {
-                    statusCode: "200",
-                    responseTemplates: {
-                        'application/json': "$input.body"
-                    }
-                },
-                {
-                    statusCode: "404",
-                    selectionPattern: ".*Product not found.*",
-                    responseTemplates: {
-                        'application/json': "$input.body"
-                    }
-                }
-            ],
-        };
-
-        const methodResponses: MethodOptions =  {
+        const methodResponses: MethodOptions = {
             methodResponses: [
                 {
                     statusCode: "200",
@@ -65,17 +42,10 @@ export class ProductServiceStack extends cdk.Stack {
             ]
         }
 
-        const corsOptions = {
-            allowOrigins: ['https://d1aiaa4o7nci8k.cloudfront.net'],
-            allowMethods: ['GET'],
-        };
-
         const productsResource = api.root.addResource('products');
-        productsResource.addMethod('GET', new LambdaIntegration(getProductsList, integrationOptions), methodResponses);
-        productsResource.addCorsPreflight(corsOptions);
+        productsResource.addMethod('GET', new LambdaIntegration(getProductsList), methodResponses);
 
         const singleProductResource = productsResource.addResource('{productId}');
-        singleProductResource.addMethod('GET', new LambdaIntegration(getProductById, integrationOptions), methodResponses);
-        singleProductResource.addCorsPreflight(corsOptions);
+        singleProductResource.addMethod('GET', new LambdaIntegration(getProductById), methodResponses);
     }
 }
