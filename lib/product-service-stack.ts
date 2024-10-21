@@ -10,7 +10,7 @@ export class ProductServiceStack extends cdk.Stack {
         super(scope, id, props);
 
         const sharedLayer = new LayerVersion(this, 'SharedLayer', {
-            code: Code.fromAsset(path.join(__dirname, '../dist/src/layers')),
+            code: Code.fromAsset(path.join(__dirname, '../dist/src/layers/shared')),
             compatibleRuntimes: [Runtime.NODEJS_20_X],
         });
 
