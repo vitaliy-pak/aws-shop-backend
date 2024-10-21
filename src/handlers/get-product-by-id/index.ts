@@ -1,7 +1,7 @@
-import { createFailedResponse, createSuccessfulResponse } from "../../shared/utils/api-responses";
-import { products } from "../../shared/data/products";
+import { createFailedResponse, createSuccessfulResponse } from '/opt/utils/api-responses';
+import { products } from "/opt/data/products";
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
-import { NotFoundError } from "../../shared/utils/errors";
+import { NotFoundError } from "/opt/utils/errors";
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
     const productId = event.pathParameters?.productId;

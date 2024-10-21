@@ -1,9 +1,9 @@
 import { APIGatewayProxyResult } from "aws-lambda";
 import { RequestError } from "./errors";
 
-export const createSuccessfulResponse = (data: unknown): APIGatewayProxyResult => {
+export const createSuccessfulResponse = (data: unknown, statusCode = 200): APIGatewayProxyResult => {
     return {
-        statusCode: 200,
+        statusCode,
         headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Headers': 'Content-Type',
