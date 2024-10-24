@@ -39,7 +39,7 @@ export class NotFoundError extends RequestError {
 }
 
 export class InternalServerError extends RequestError {
-    constructor(message: string) {
+    constructor(message: string = 'Internal Server Error') {
         super(errorTypes.internalServerError, message);
     }
 }

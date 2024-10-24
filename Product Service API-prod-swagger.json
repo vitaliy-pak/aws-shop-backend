@@ -2,7 +2,7 @@
   "swagger" : "2.0",
   "info" : {
     "description" : "This service serves products.",
-    "version" : "2024-10-15T06:19:54Z",
+    "version" : "2024-10-22T08:53:17Z",
     "title" : "Product Service API"
   },
   "host" : "nb8rmwa8bc.execute-api.us-east-1.amazonaws.com",
@@ -16,11 +16,43 @@
           "200" : {
             "description" : "200 response",
             "schema" : {
-              "$ref" : "#/definitions/Empty"
+              "$ref" : "#/definitions/ProducProdubmD7WRLIxNga"
             }
           },
-          "404" : {
-            "description" : "404 response",
+          "500" : {
+            "description" : "500 response",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post" : {
+        "consumes" : [ "application/json" ],
+        "produces" : [ "application/json" ],
+        "parameters" : [ {
+          "in" : "body",
+          "name" : "ProducCreat0agaH6GfRvKM",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/definitions/ProducCreat0agaH6GfRvKM"
+          }
+        } ],
+        "responses" : {
+          "201" : {
+            "description" : "201 response",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "400" : {
+            "description" : "400 response",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "500" : {
+            "description" : "500 response",
             "schema" : {
               "$ref" : "#/definitions/Error"
             }
@@ -31,16 +63,16 @@
         "consumes" : [ "application/json" ],
         "produces" : [ "application/json" ],
         "responses" : {
-          "204" : {
-            "description" : "204 response",
+          "200" : {
+            "description" : "200 response",
+            "schema" : {
+              "$ref" : "#/definitions/Empty"
+            },
             "headers" : {
               "Access-Control-Allow-Origin" : {
                 "type" : "string"
               },
               "Access-Control-Allow-Methods" : {
-                "type" : "string"
-              },
-              "Vary" : {
                 "type" : "string"
               },
               "Access-Control-Allow-Headers" : {
@@ -64,42 +96,19 @@
           "200" : {
             "description" : "200 response",
             "schema" : {
-              "$ref" : "#/definitions/Empty"
+              "$ref" : "#/definitions/ProducProdu2BOY2hR9pQJf"
+            }
+          },
+          "500" : {
+            "description" : "500 response",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
             }
           },
           "404" : {
             "description" : "404 response",
             "schema" : {
               "$ref" : "#/definitions/Error"
-            }
-          }
-        }
-      },
-      "options" : {
-        "consumes" : [ "application/json" ],
-        "produces" : [ "application/json" ],
-        "parameters" : [ {
-          "name" : "productId",
-          "in" : "path",
-          "required" : true,
-          "type" : "string"
-        } ],
-        "responses" : {
-          "204" : {
-            "description" : "204 response",
-            "headers" : {
-              "Access-Control-Allow-Origin" : {
-                "type" : "string"
-              },
-              "Access-Control-Allow-Methods" : {
-                "type" : "string"
-              },
-              "Vary" : {
-                "type" : "string"
-              },
-              "Access-Control-Allow-Headers" : {
-                "type" : "string"
-              }
             }
           }
         }
@@ -111,6 +120,46 @@
       "type" : "object",
       "title" : "Empty Schema"
     },
+    "ProducCreat0agaH6GfRvKM" : {
+      "required" : [ "count", "price", "title" ],
+      "properties" : {
+        "price" : {
+          "type" : "number"
+        },
+        "count" : {
+          "type" : "number"
+        },
+        "description" : {
+          "type" : "string"
+        },
+        "title" : {
+          "type" : "string"
+        }
+      }
+    },
+    "ProducProdubmD7WRLIxNga" : {
+      "type" : "array",
+      "items" : {
+        "type" : "object",
+        "properties" : {
+          "price" : {
+            "type" : "number"
+          },
+          "count" : {
+            "type" : "number"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        }
+      }
+    },
     "Error" : {
       "type" : "object",
       "properties" : {
@@ -119,6 +168,26 @@
         }
       },
       "title" : "Error Schema"
+    },
+    "ProducProdu2BOY2hR9pQJf" : {
+      "type" : "object",
+      "properties" : {
+        "price" : {
+          "type" : "number"
+        },
+        "count" : {
+          "type" : "number"
+        },
+        "description" : {
+          "type" : "string"
+        },
+        "id" : {
+          "type" : "string"
+        },
+        "title" : {
+          "type" : "string"
+        }
+      }
     }
   }
 }

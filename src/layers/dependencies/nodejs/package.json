@@ -1,0 +1,12 @@
+{
+  "name": "dependencies",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "joi": "^17.13.3",
+    "uuid": "^10.0.0"
+  }
+}
