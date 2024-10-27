@@ -30,7 +30,7 @@ export class ImportServiceStack extends cdk.Stack {
                 HttpMethods.HEAD,
             ],
             allowedOrigins: ['https://d1aiaa4o7nci8k.cloudfront.net'],
-            allowedHeaders: ['Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'],
+            allowedHeaders: ['*'],
         };
         const bucket = new Bucket(this, 'ImportBucket', {
             bucketName: 'import-service-bucket',
