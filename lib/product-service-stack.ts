@@ -15,8 +15,8 @@ export class ProductServiceStack extends cdk.Stack {
             compatibleRuntimes: [Runtime.NODEJS_20_X],
         });
 
-        const dependenciesLayer = new LayerVersion(this, 'DependenciesLayer', {
-            code: Code.fromAsset(path.join(__dirname, '../src/layers/dependencies')),
+        const dependenciesLayer = new LayerVersion(this, 'ProductServiceDepsLayer', {
+            code: Code.fromAsset(path.join(__dirname, '../src/layers/product-service-deps')),
             compatibleRuntimes: [Runtime.NODEJS_20_X],
         });
 
