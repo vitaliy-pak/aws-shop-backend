@@ -7,7 +7,7 @@ export const createSuccessfulResponse = (data: unknown, statusCode = 200): APIGa
         headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Methods': 'OPTIONS,GET',
+            'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
         },
         body: JSON.stringify(data)
     };
@@ -19,7 +19,7 @@ export const createFailedResponse = (error: RequestError): APIGatewayProxyResult
         headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Methods': 'OPTIONS,GET',
+            'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
         },
         body: JSON.stringify({message: error.message})
     };
