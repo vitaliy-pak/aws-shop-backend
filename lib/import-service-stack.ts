@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { Code, Function, LayerVersion, Runtime } from "aws-cdk-lib/aws-lambda";
 import path from "path";
-import { LambdaIntegration, RestApi } from "aws-cdk-lib/aws-apigateway";
+import { JsonSchemaType, LambdaIntegration, MethodOptions, Model, RestApi } from "aws-cdk-lib/aws-apigateway";
 import { Bucket, CorsRule, EventType, HttpMethods } from "aws-cdk-lib/aws-s3";
 import { LambdaDestination } from "aws-cdk-lib/aws-s3-notifications";
 
@@ -66,7 +66,39 @@ export class ImportServiceStack extends cdk.Stack {
             description: 'This service serves imports.',
         });
         const importResource = api.root.addResource('import');
-        importResource.addMethod('GET', new LambdaIntegration(importProductsFile));
+
+        const responseModel = new Model(this, 'ResponseModel', {
+            restApi: api,
+            contentType: 'application/json',
+            schema: {
+                type: JsonSchemaType.STRING,
+            },
+        });
+
+        const methodOptions: MethodOptions = {
+            methodResponses: [
+                {
+                    statusCode: '200',
+                    responseModels: {
+                        'application/json': responseModel,
+                    },
+                },
+                {
+                    statusCode: '400',
+                    responseModels: {
+                        'application/json': Model.ERROR_MODEL,
+                    },
+                },
+                {
+                    statusCode: '500',
+                    responseModels: {
+                        'application/json': Model.ERROR_MODEL,
+                    },
+                },
+            ],
+        };
+
+        importResource.addMethod('GET', new LambdaIntegration(importProductsFile), methodOptions);
 
 
         bucket.grantReadWrite(importFileParser);
