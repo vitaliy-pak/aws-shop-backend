@@ -5,6 +5,7 @@ import path from "path";
 import { JsonSchemaType, LambdaIntegration, MethodOptions, Model, RestApi } from "aws-cdk-lib/aws-apigateway";
 import { Bucket, CorsRule, EventType, HttpMethods } from "aws-cdk-lib/aws-s3";
 import { LambdaDestination } from "aws-cdk-lib/aws-s3-notifications";
+import { Queue } from "aws-cdk-lib/aws-sqs";
 
 
 export class ImportServiceStack extends cdk.Stack {
@@ -50,6 +51,9 @@ export class ImportServiceStack extends cdk.Stack {
             }
         });
 
+        const catalogItemsQueueUrl = cdk.Fn.importValue('CatalogItemsQueueUrl');
+        const catalogItemsQueueArn = cdk.Fn.importValue('CatalogItemsQueueArn');
+
         const importFileParser = new Function(this, 'ImportFileParser', {
             runtime: Runtime.NODEJS_20_X,
             handler: 'index.handler',
@@ -57,7 +61,13 @@ export class ImportServiceStack extends cdk.Stack {
             layers: [
                 dependenciesLayer
             ],
+            environment: {
+                SQS_QUEUE_URL: catalogItemsQueueUrl
+            }
         });
+
+        const catalogItemsQueue = Queue.fromQueueArn(this, 'CatalogItemsQueue', catalogItemsQueueArn);
+        catalogItemsQueue.grantSendMessages(importFileParser);
 
         bucket.grantPut(importProductsFile);
 
