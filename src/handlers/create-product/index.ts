@@ -9,12 +9,13 @@ import { validateProduct } from "/opt/utils/validators";
 export const handler: Handler = async (event: APIGatewayEvent, context: Context): Promise<APIGatewayProxyResult> => {
     console.log("event:", event);
 
-    const client = new DynamoDBClient([{
-        region: process.env.AWS_REGION,
-        credentials: fromSSO({profile: process.env.AWS_PROFILE})
-    }]);
-
     try {
+
+        const client = new DynamoDBClient([{
+            region: process.env.AWS_REGION,
+            credentials: fromSSO({profile: process.env.AWS_PROFILE})
+        }]);
+
         const product = JSON.parse(event.body || '{}');
         const error = validateProduct(product);
 

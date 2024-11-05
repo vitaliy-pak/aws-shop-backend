@@ -7,12 +7,12 @@ import { fromSSO } from "@aws-sdk/credential-providers";
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
     console.log("event", event);
 
-    const client = new DynamoDBClient([{
-        region: process.env.AWS_REGION,
-        credentials: fromSSO({profile: process.env.AWS_PROFILE})
-    }]);
-
     try {
+        const client = new DynamoDBClient([{
+            region: process.env.AWS_REGION,
+            credentials: fromSSO({profile: process.env.AWS_PROFILE})
+        }]);
+
         const productId = event.pathParameters?.productId;
 
         if (!productId) {

@@ -5,12 +5,12 @@ import { fromSSO } from "@aws-sdk/credential-providers";
 import { InternalServerError } from "/opt/utils/errors";
 
 export const handler: Handler<APIGatewayProxyEvent, APIGatewayProxyResult> = async (): Promise<APIGatewayProxyResult> => {
-    const client = new DynamoDBClient([{
-        region: process.env.AWS_REGION,
-        credentials: fromSSO({ profile: process.env.AWS_PROFILE })
-    }]);
-
     try {
+        const client = new DynamoDBClient([{
+            region: process.env.AWS_REGION,
+            credentials: fromSSO({ profile: process.env.AWS_PROFILE })
+        }]);
+
         const productsCommand = new ScanCommand({
             TableName: process.env.PRODUCTS_TABLE,
         });
