@@ -192,7 +192,9 @@ export class ProductServiceStack extends cdk.Stack {
             exportName: 'CatalogItemsQueueUrl',
         });
 
-        const SNS_TOPIC_ARN = 'arn:aws:sns:us-east-1:474668420860:ProductServiceStack-CreateProductsTopicE72DA09D-rXAdZynjJP18';
+        const createProductsTopic = new Topic(this, 'CreateProductsTopic', {
+            displayName: 'Create Products Topic',
+        });
 
         const catalogBatchProcess = new Function(this, "CatalogBatchProcess", {
             runtime: Runtime.NODEJS_20_X,
@@ -203,15 +205,11 @@ export class ProductServiceStack extends cdk.Stack {
             environment: {
                 PRODUCTS_TABLE: productsTable.tableName,
                 STOCK_TABLE: stockTable.tableName,
-                SNS_TOPIC_ARN
+                SNS_TOPIC_ARN: createProductsTopic.topicArn
             },
         });
 
         catalogBatchProcess.addEventSource(new SqsEventSource(catalogItemsQueue, {batchSize: 5}));
-
-        const createProductsTopic = new Topic(this, 'CreateProductsTopic', {
-            displayName: 'Create Products Topic',
-        });
 
         const highPriceEmailSubscription = new EmailSubscription('vitaliypak555@gmail.com', {
             filterPolicy: {
@@ -234,7 +232,7 @@ export class ProductServiceStack extends cdk.Stack {
 
         const snsPublishPolicy = new PolicyStatement({
             actions: ['sns:Publish'],
-            resources: [SNS_TOPIC_ARN],
+            resources: [createProductsTopic.topicArn],
         });
 
         catalogBatchProcess.addToRolePolicy(snsPublishPolicy);
