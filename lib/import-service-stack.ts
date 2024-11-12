@@ -2,9 +2,20 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { Code, Function, LayerVersion, Runtime } from "aws-cdk-lib/aws-lambda";
 import path from "path";
-import { JsonSchemaType, LambdaIntegration, MethodOptions, Model, RestApi } from "aws-cdk-lib/aws-apigateway";
+import {
+    AuthorizationType,
+    CfnGatewayResponse,
+    JsonSchemaType,
+    LambdaIntegration,
+    MethodOptions,
+    Model,
+    RestApi,
+    TokenAuthorizer
+} from "aws-cdk-lib/aws-apigateway";
 import { Bucket, CorsRule, EventType, HttpMethods } from "aws-cdk-lib/aws-s3";
 import { LambdaDestination } from "aws-cdk-lib/aws-s3-notifications";
+import { Queue } from "aws-cdk-lib/aws-sqs";
+import { ServicePrincipal } from "aws-cdk-lib/aws-iam";
 
 
 export class ImportServiceStack extends cdk.Stack {
@@ -47,8 +58,11 @@ export class ImportServiceStack extends cdk.Stack {
             ],
             environment: {
                 BUCKET_NAME: bucket.bucketName
-            }
+            },
         });
+
+        const catalogItemsQueueUrl = cdk.Fn.importValue('CatalogItemsQueueUrl');
+        const catalogItemsQueueArn = cdk.Fn.importValue('CatalogItemsQueueArn');
 
         const importFileParser = new Function(this, 'ImportFileParser', {
             runtime: Runtime.NODEJS_20_X,
@@ -57,7 +71,13 @@ export class ImportServiceStack extends cdk.Stack {
             layers: [
                 dependenciesLayer
             ],
+            environment: {
+                SQS_QUEUE_URL: catalogItemsQueueUrl
+            }
         });
+
+        const catalogItemsQueue = Queue.fromQueueArn(this, 'CatalogItemsQueue', catalogItemsQueueArn);
+        catalogItemsQueue.grantSendMessages(importFileParser);
 
         bucket.grantPut(importProductsFile);
 
@@ -75,6 +95,28 @@ export class ImportServiceStack extends cdk.Stack {
             },
         });
 
+        const basicAuthorizerArn = cdk.Fn.importValue('BasicAuthorizerArn');
+        const basicAuthorizer = Function.fromFunctionAttributes(this, 'BasicAuthorizer', {
+            functionArn: basicAuthorizerArn,
+            sameEnvironment: true
+        });
+        const methodArn = api.arnForExecuteApi(
+            'GET',
+            '/import',
+            '*'
+        );
+
+        basicAuthorizer.addPermission('InvokeByAPIGateway', {
+            principal: new ServicePrincipal('apigateway.amazonaws.com'),
+            action: 'lambda:InvokeFunction',
+            sourceArn: methodArn
+        });
+        const tokenAuthorizer = new TokenAuthorizer(this, 'TokenAuthorizer', {
+            handler: basicAuthorizer,
+            identitySource: 'method.request.header.Authorization',
+        });
+
+
         const methodOptions: MethodOptions = {
             methodResponses: [
                 {
@@ -90,16 +132,62 @@ export class ImportServiceStack extends cdk.Stack {
                     },
                 },
                 {
+                    statusCode: '401',
+                    responseModels: {
+                        'application/json': Model.ERROR_MODEL,
+                    },
+                },
+                {
+                    statusCode: '403',
+                    responseModels: {
+                        'application/json': Model.ERROR_MODEL,
+                    },
+                },
+                {
                     statusCode: '500',
                     responseModels: {
                         'application/json': Model.ERROR_MODEL,
                     },
                 },
             ],
+            authorizer: tokenAuthorizer,
+            authorizationType: AuthorizationType.CUSTOM,
         };
 
         importResource.addMethod('GET', new LambdaIntegration(importProductsFile), methodOptions);
 
+        new CfnGatewayResponse(this, 'APIGatewayUnauthorizedResponse', {
+            restApiId: api.restApiId,
+            responseType: 'UNAUTHORIZED',
+            statusCode: '401',
+            responseParameters: {
+                'gatewayresponse.header.Access-Control-Allow-Origin': "'https://d1aiaa4o7nci8k.cloudfront.net'",
+                'gatewayresponse.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                'gatewayresponse.header.Access-Control-Allow-Methods': "'GET,OPTIONS'"
+            },
+            responseTemplates: {
+                'application/json': '{"message": "Unauthorized. Please provide valid credentials."}'
+            }
+        });
+
+        new CfnGatewayResponse(this, 'APIGatewayForbiddenResponse', {
+            restApiId: api.restApiId,
+            responseType: 'ACCESS_DENIED',
+            statusCode: '403',
+            responseParameters: {
+                'gatewayresponse.header.Access-Control-Allow-Origin': "'https://d1aiaa4o7nci8k.cloudfront.net'",
+                'gatewayresponse.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'",
+                'gatewayresponse.header.Access-Control-Allow-Methods': "'GET,OPTIONS'"
+            },
+            responseTemplates: {
+                'application/json': '{"message": "Forbidden. You do not have permission to access this resource."}'
+            }
+        });
+
+        importResource.addCorsPreflight({
+            allowOrigins: ['https://d1aiaa4o7nci8k.cloudfront.net'],
+            allowMethods: ['GET'],
+        });
 
         bucket.grantReadWrite(importFileParser);
 

@@ -4,6 +4,11 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import path from "path";
 import { AttributeType, Table } from "aws-cdk-lib/aws-dynamodb";
+import { Queue } from "aws-cdk-lib/aws-sqs";
+import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
+import { SubscriptionFilter, Topic } from "aws-cdk-lib/aws-sns";
+import { EmailSubscription } from "aws-cdk-lib/aws-sns-subscriptions";
+import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 
 
 export class ProductServiceStack extends cdk.Stack {
@@ -175,6 +180,63 @@ export class ProductServiceStack extends cdk.Stack {
             ],
         });
 
+        const catalogItemsQueue = new Queue(this, "CatalogItemsQueue");
+
+        new cdk.CfnOutput(this, 'CatalogItemsQueueArn', {
+            value: catalogItemsQueue.queueArn,
+            exportName: 'CatalogItemsQueueArn',
+        });
+
+        new cdk.CfnOutput(this, 'CatalogItemsQueueUrl', {
+            value: catalogItemsQueue.queueUrl,
+            exportName: 'CatalogItemsQueueUrl',
+        });
+
+        const createProductsTopic = new Topic(this, 'CreateProductsTopic', {
+            displayName: 'Create Products Topic',
+        });
+
+        const catalogBatchProcess = new Function(this, "CatalogBatchProcess", {
+            runtime: Runtime.NODEJS_20_X,
+            timeout: cdk.Duration.seconds(5),
+            handler: "index.handler",
+            code: Code.fromAsset(path.join(__dirname, '../dist/src/handlers/catalog-batch-process')),
+            layers: [sharedLayer, dependenciesLayer],
+            environment: {
+                PRODUCTS_TABLE: productsTable.tableName,
+                STOCK_TABLE: stockTable.tableName,
+                SNS_TOPIC_ARN: createProductsTopic.topicArn
+            },
+        });
+
+        catalogBatchProcess.addEventSource(new SqsEventSource(catalogItemsQueue, {batchSize: 5}));
+
+        const highPriceEmailSubscription = new EmailSubscription('vitaliypak555@gmail.com', {
+            filterPolicy: {
+                price: SubscriptionFilter.numericFilter({
+                    greaterThan: 1000
+                })
+            }
+        });
+
+        const lowPriceEmailSubscription = new EmailSubscription('vitaliypak0555@gmail.com', {
+            filterPolicy: {
+                price: SubscriptionFilter.numericFilter({
+                    lessThanOrEqualTo: 1000
+                })
+            }
+        });
+
+        createProductsTopic.addSubscription(highPriceEmailSubscription);
+        createProductsTopic.addSubscription(lowPriceEmailSubscription);
+
+        const snsPublishPolicy = new PolicyStatement({
+            actions: ['sns:Publish'],
+            resources: [createProductsTopic.topicArn],
+        });
+
+        catalogBatchProcess.addToRolePolicy(snsPublishPolicy);
+
         productsTable.grantWriteData(createProduct);
         stockTable.grantWriteData(createProduct);
 
@@ -183,5 +245,9 @@ export class ProductServiceStack extends cdk.Stack {
 
         productsTable.grantReadData(getProductsList);
         stockTable.grantReadData(getProductsList);
+
+        productsTable.grantWriteData(catalogBatchProcess);
+        stockTable.grantWriteData(catalogBatchProcess);
+
     }
 }
